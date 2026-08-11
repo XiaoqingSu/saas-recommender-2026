@@ -2,23 +2,13 @@
 
 Natural-language SaaS discovery over **2026 Product Hunt** launches.
 
-This project adapts a classic Book Recommender pipeline to product discovery: instead of book blurbs and literary moods, it embeds `name + tagline + description + topics`, then filters by category, heat, and target audience.
-
 **Repo:** [github.com/XiaoqingSu/saas-recommender-2026](https://github.com/XiaoqingSu/saas-recommender-2026)
 
 ---
 
 ## Why this project
 
-| Dimension | Book Recommender | SaaS Recommender |
-| --- | --- | --- |
-| Text source | Book description | Name + tagline + description + topics |
-| Filter facets | Fiction / emotion | Category + heat + target user |
-| Ranking signals | Semantic similarity only | Semantic recall + upvotes / engagement / viral flags |
-| Business use | Reading interest | Tool selection, competitive scouting, lead research |
-| Data freshness | Historical books | 2026 launches (timely narrative) |
-
-Useful as a portfolio / Upwork case study: real PH-style data, semantic search, multi-facet filters, and a demoable Gradio UI.
+In 2026, new SaaS and AI tools launch every week—this recommender turns that noise into actionable picks via natural-language search over live Product Hunt data, with filters for category, heat, and target audience.
 
 ---
 
