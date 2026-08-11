@@ -193,37 +193,74 @@ def recommend(
     return filtered.to_dict(orient="records")
 
 
+def _esc(text: object) -> str:
+    return (
+        str(text or "")
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+
+
 def format_results_markdown(results: list[dict], query: str, filters: dict) -> str:
+    """HTML result cards for the Gradio frontend."""
     if not query.strip():
-        return "Enter a natural-language need, e.g. *AI coding agent for solo founders*."
+        return (
+            "<p class='hint'>Describe what you need — e.g. "
+            "<em>AI coding agent for solo founders</em>.</p>"
+        )
     if not results:
         return (
-            "No products matched after filters.\n\n"
-            f"Query: **{query}**  \n"
-            f"Filters: {filters}\n\n"
-            "Try widening category / heat / audience, or rebuild a larger Chroma index."
+            "<div class='empty'>"
+            "<h3>No matches</h3>"
+            f"<p>Query: <strong>{_esc(query)}</strong></p>"
+            f"<p>Filters: {_esc(filters)}</p>"
+            "<p>Widen category / heat / audience, or rebuild a larger index.</p>"
+            "</div>"
         )
 
-    lines = [
-        f"### Results for “{query.strip()}”",
-        f"Filters: category=`{filters.get('category')}` · heat=`{filters.get('heat')}` · audience=`{filters.get('audience')}`",
-        f"Catalog: `{resolve_catalog_path().name}` · index: `{get_chroma_dir().name}`",
-        "",
+    cards: list[str] = [
+        "<div class='results-head'>",
+        f"<h2>Results for “{_esc(query.strip())}”</h2>",
+        (
+            f"<p class='meta'>category · {_esc(filters.get('category'))} &nbsp;|&nbsp; "
+            f"heat · {_esc(filters.get('heat'))} &nbsp;|&nbsp; "
+            f"audience · {_esc(filters.get('audience'))}</p>"
+        ),
+        "</div>",
+        "<div class='result-list'>",
     ]
+
     for i, r in enumerate(results, start=1):
-        lines.extend(
-            [
-                f"#### {i}. {r['name']}",
-                f"**{r['tagline']}**",
-                f"- Upvotes: **{r['votes_count']}**"
-                + (f" · Heat: {r['heat_tier']}" if r.get("heat_tier") else "")
-                + (f" · Audience: {r['target_user']}" if r.get("target_user") else "")
-                + (f" · Type: {r['product_type']}" if r.get("product_type") else ""),
-                f"- Topics: {r.get('topics') or '—'}",
-                f"- Website / platforms: {r.get('website') or 'N/A'}",
-                f"- Product Hunt: [{r['name']} on PH]({r['product_hunt_url']})",
-                f"- Why: {r.get('reason')}",
-                "",
-            ]
+        badges = []
+        if r.get("product_type"):
+            badges.append(f"<span class='badge'>{_esc(r['product_type'])}</span>")
+        if r.get("heat_tier"):
+            badges.append(f"<span class='badge badge-heat'>{_esc(r['heat_tier'])}</span>")
+        if r.get("target_user"):
+            badges.append(f"<span class='badge badge-user'>{_esc(r['target_user'])}</span>")
+        badge_html = " ".join(badges)
+
+        cards.append(
+            f"""
+<article class="result-card">
+  <div class="rank">#{i}</div>
+  <div class="body">
+    <h3>{_esc(r['name'])}</h3>
+    <p class="tagline">{_esc(r['tagline'])}</p>
+    <div class="badges">{badge_html}</div>
+    <p class="votes"><strong>{_esc(r['votes_count'])}</strong> upvotes
+       · topics: {_esc(r.get('topics') or '—')}</p>
+    <p class="links">
+      <span>{_esc(r.get('website') or 'N/A')}</span>
+      · <a href="{_esc(r['product_hunt_url'])}" target="_blank" rel="noopener">Product Hunt</a>
+    </p>
+    <p class="why"><strong>Why:</strong> {_esc(r.get('reason'))}</p>
+  </div>
+</article>
+"""
         )
-    return "\n".join(lines)
+
+    cards.append("</div>")
+    return "\n".join(cards)
